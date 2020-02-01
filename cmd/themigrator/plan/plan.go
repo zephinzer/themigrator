@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"path"
@@ -50,6 +51,7 @@ func Get(logs chan log.Entry) *cobra.Command {
 					done <- common.ExitCodeGeneric
 					return
 				}
+				_, err = getRemoteMigrations(<-eventStream.Connection, logs)
 				done <- common.ExitCodeOK
 			}()
 			exitCode := <-done
@@ -59,6 +61,31 @@ func Get(logs chan log.Entry) *cobra.Command {
 	}
 	connection.AddCobraFlags(cmd, &connectionOptions)
 	return cmd
+}
+
+func getRemoteMigrations(dbConnection *sql.DB, logs chan log.Entry) ([]migration.Migration, error) {
+	remoteMigrations, err := migration.LoadRemote(dbConnection)
+	if err != nil {
+		logs <- log.Entry{
+			Code:    CommandCode,
+			Level:   log.LevelError,
+			Message: err.Error(),
+		}
+		return nil, err
+	}
+	logs <- log.Entry{
+		Code:    CommandCode,
+		Level:   log.LevelInfo,
+		Message: fmt.Sprintf("found %v remote migrations as follows", len(remoteMigrations)),
+	}
+	for i := 0; i < len(remoteMigrations); i++ {
+		logs <- log.Entry{
+			Code:    "MIGRATION",
+			Level:   log.LevelDebug,
+			Message: fmt.Sprintf("%s: '%s'", remoteMigrations[i].ContentHash, remoteMigrations[i].Content),
+		}
+	}
+	return remoteMigrations, nil
 }
 
 func getLocalMigrations(fromPath string, logs chan log.Entry) ([]migration.Migration, error) {

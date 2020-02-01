@@ -11,6 +11,10 @@ import (
 	"gitlab.com/zephinzer/themigrator/lib/log"
 )
 
+const (
+	CommandCode = "VERIFY_CONNECTION"
+)
+
 func Get(logs chan log.Entry) *cobra.Command {
 	var connectionOptions connection.Options
 	cmd := &cobra.Command{
@@ -22,7 +26,7 @@ func Get(logs chan log.Entry) *cobra.Command {
 			go handleErrors(eventStream, done)
 			go handleLogs(eventStream, logs)
 			logs <- log.Entry{
-				Code: "VERIFY_CONNECTION",
+				Code: CommandCode,
 				Message: fmt.Sprintf(
 					"connecting as '%s' to '%s:%s/%s' with parameters %v",
 					connectionOptions.User,
@@ -40,7 +44,7 @@ func Get(logs chan log.Entry) *cobra.Command {
 			go func() {
 				<-eventStream.Connection
 				logs <- log.Entry{
-					Code:    common.ErrorOK,
+					Code:    CommandCode,
 					Message: "connection credentials verified",
 				}
 				done <- common.ExitCodeOK

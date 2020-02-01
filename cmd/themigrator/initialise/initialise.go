@@ -30,7 +30,20 @@ func Get(logs chan log.Entry) *cobra.Command {
 				500*time.Millisecond,
 			)
 			go func() {
-				err := migration.CreateTable(<-eventStream.Connection)
+				conn := <-eventStream.Connection
+
+				err := migration.IsTableCreated(conn)
+				if err == nil {
+					logs <- log.Entry{
+						Code:    CommandCode,
+						Level:   log.LevelInfo,
+						Message: "migration table already exists",
+					}
+					done <- common.ExitCodeOK
+					return
+				}
+
+				err = migration.CreateTable(conn)
 				if err != nil {
 					logs <- log.Entry{
 						Code:    CommandCode,
@@ -38,14 +51,15 @@ func Get(logs chan log.Entry) *cobra.Command {
 						Message: err.Error(),
 					}
 					done <- common.ExitCodeCreateMigrationsTableFailed
-				} else {
-					logs <- log.Entry{
-						Code:    CommandCode,
-						Level:   log.LevelInfo,
-						Message: "migration table created",
-					}
-					done <- common.ExitCodeOK
+					return
 				}
+
+				logs <- log.Entry{
+					Code:    CommandCode,
+					Level:   log.LevelInfo,
+					Message: "migration table created",
+				}
+				done <- common.ExitCodeOK
 			}()
 			exitCode := <-done
 			<-time.After(time.Second)
