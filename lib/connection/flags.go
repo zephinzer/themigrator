@@ -1,41 +1,70 @@
 package connection
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
-func AddCobraFlags(command *cobra.Command, connectionOptions *Options) {
-	command.PersistentFlags().StringVarP(
-		&connectionOptions.User,
-		"user",
-		"u",
-		"user",
+type Flag struct {
+	Long    string
+	Short   string
+	Default string
+}
+
+var (
+	FlagUser     = Flag{"user", "u", "user"}
+	FlagPassword = Flag{"password", "p", "password"}
+	FlagHost     = Flag{"host", "H", "localhost"}
+	FlagPort     = Flag{"port", "P", "3306"}
+	FlagDatabase = Flag{"database", "d", ""}
+)
+
+type AddCobraFlagsOptions struct {
+	Command           *cobra.Command
+	ConnectionOptions *Options
+	RequiredFlags     []string
+}
+
+func AddCobraFlags(options AddCobraFlagsOptions) {
+	options.Command.Flags().StringVarP(
+		&options.ConnectionOptions.User,
+		FlagUser.Long,
+		FlagUser.Short,
+		FlagUser.Default,
 		"username of the database user",
 	)
-	command.PersistentFlags().StringVarP(
-		&connectionOptions.Password,
-		"password",
-		"p",
-		"password",
+
+	options.Command.Flags().StringVarP(
+		&options.ConnectionOptions.Password,
+		FlagPassword.Long,
+		FlagPassword.Short,
+		FlagPassword.Default,
 		"password of the database user",
 	)
-	command.PersistentFlags().StringVarP(
-		&connectionOptions.Host,
-		"host",
-		"H",
-		"localhost",
+	options.Command.Flags().StringVarP(
+		&options.ConnectionOptions.Host,
+		FlagHost.Long,
+		FlagHost.Short,
+		FlagHost.Default,
 		"hostname of the database service",
 	)
-	command.PersistentFlags().StringVarP(
-		&connectionOptions.Port,
-		"port",
-		"P",
-		"3306",
+	options.Command.Flags().StringVarP(
+		&options.ConnectionOptions.Port,
+		FlagPort.Long,
+		FlagPort.Short,
+		FlagPort.Default,
 		"port that the database service is listening on",
 	)
-	command.PersistentFlags().StringVarP(
-		&connectionOptions.Database,
-		"database",
-		"d",
-		"",
+	options.Command.Flags().StringVarP(
+		&options.ConnectionOptions.Database,
+		FlagDatabase.Long,
+		FlagDatabase.Short,
+		FlagDatabase.Default,
 		"database table to use by default",
 	)
+	for _, flag := range options.RequiredFlags {
+		err := options.Command.MarkFlagRequired(flag)
+		if err != nil {
+			panic(err)
+		}
+	}
 }

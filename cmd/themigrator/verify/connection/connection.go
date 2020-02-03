@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/usvc/logger"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/common"
 	"gitlab.com/zephinzer/themigrator/lib/connection"
 	"gitlab.com/zephinzer/themigrator/lib/log"
 )
 
 const (
-	CommandCode = "VERIFY_CONNECTION"
+	CommandCode = "verify-connection"
 )
 
 func Get(logs chan log.Entry) *cobra.Command {
@@ -25,17 +26,14 @@ func Get(logs chan log.Entry) *cobra.Command {
 			eventStream := connection.NewEventStream()
 			go handleErrors(eventStream, done)
 			go handleLogs(eventStream, logs)
-			logs <- log.Entry{
-				Code: CommandCode,
-				Message: fmt.Sprintf(
-					"connecting as '%s' to '%s:%s/%s' with parameters %v",
-					connectionOptions.User,
-					connectionOptions.Host,
-					connectionOptions.Port,
-					connectionOptions.Database,
-					connectionOptions.Params,
-				),
-			}
+			logs <- log.NewEntry(logger.LevelDebug, CommandCode, fmt.Sprintf(
+				"connecting as '%s' to '%s:%s/%s' with parameters %v",
+				connectionOptions.User,
+				connectionOptions.Host,
+				connectionOptions.Port,
+				connectionOptions.Database,
+				connectionOptions.Params,
+			))
 			go connection.Establish(
 				connectionOptions,
 				eventStream,
@@ -43,10 +41,7 @@ func Get(logs chan log.Entry) *cobra.Command {
 			)
 			go func() {
 				<-eventStream.Connection
-				logs <- log.Entry{
-					Code:    CommandCode,
-					Message: "connection credentials verified",
-				}
+				logs <- log.NewEntry(logger.LevelInfo, CommandCode, "connection credentials verified")
 				done <- common.ExitCodeOK
 			}()
 			exitCode := <-done
@@ -54,7 +49,10 @@ func Get(logs chan log.Entry) *cobra.Command {
 			os.Exit(exitCode)
 		},
 	}
-	connection.AddCobraFlags(cmd, &connectionOptions)
+	connection.AddCobraFlags(connection.AddCobraFlagsOptions{
+		Command:           cmd,
+		ConnectionOptions: &connectionOptions,
+	})
 	return cmd
 }
 

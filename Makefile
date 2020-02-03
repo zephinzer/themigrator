@@ -3,11 +3,15 @@ CMD_ROOT=themigrator
 DOCKER_NAMESPACE=zephinzer
 DOCKER_IMAGE_NAME=$(CMD_ROOT)
 
+-include ./makefile.properties
+
 init:
 	docker-compose -f ./test/docker-compose.yml up -d
 denit:
 	docker-compose -f ./test/docker-compose.yml down
-checkdb:
+check_maria:
+	mysql -uroot -ptoor -h127.0.0.1 -P3307 database
+check_mysql:
 	mysql -uroot -ptoor -h127.0.0.1 -P3306 database
 
 deps:

@@ -40,7 +40,7 @@ func CreateTable(connection *sql.DB) error {
 }
 
 func IsTableCreated(connection *sql.DB) error {
-	stmt, err := connection.Prepare(fmt.Sprintf("SELECT * FROM %s", TableName))
+	stmt, err := connection.Prepare("SELECT * FROM ?")
 	if err != nil {
 		return errors.New(errors.ErrorDatabaseStatementPrep, err.Error())
 	}
@@ -50,7 +50,7 @@ func IsTableCreated(connection *sql.DB) error {
 			cancel()
 		}
 	}()
-	_, err = stmt.ExecContext(timeoutContext)
+	_, err = stmt.ExecContext(timeoutContext, TableName)
 	if err != nil {
 		return errors.New(errors.ErrorDatabaseOpQuery, err.Error())
 	}

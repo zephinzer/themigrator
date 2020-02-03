@@ -1,11 +1,24 @@
 version: "3.5"
+networks:
+  themigrator:
+    name: themigrator
 services:
   mysql:
-    image: mysql:5.7.25
-    environment:
+    image: mysql:5.7.26
+    environment: &environment
       MYSQL_ROOT_PASSWORD: toor
       MYSQL_USER: user
       MYSQL_PASSWORD: password
       MYSQL_DATABASE: database
+    networks:
+      - themigrator
     ports:
       - 3306:3306
+  maria:
+    image: mariadb:10.4.11
+    environment:
+      <<: *environment
+    networks:
+      - themigrator
+    ports:
+      - 3307:3306

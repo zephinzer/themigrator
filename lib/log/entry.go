@@ -1,49 +1,81 @@
 package log
 
-import "fmt"
+import (
+	"fmt"
 
-type Entry struct {
-	Code    string
-	Message string
-	Level   Level
-	Data    interface{}
+	"github.com/usvc/logger"
+)
+
+// NewEntry constructs a new log entry and returns it
+func NewEntry(level logger.Level, code, message string, data ...interface{}) Entry {
+	var entryData interface{}
+	if len(data) == 0 {
+		entryData = nil
+	} else if len(data) == 1 {
+		entryData = data[0]
+	} else {
+		entryData = data
+	}
+	return logEntry{
+		Level:   level,
+		Code:    code,
+		Message: message,
+		Data:    entryData,
+	}
 }
 
-func (e Entry) GetCode() string {
-	if len(e.Code) == 0 {
+// Entry represents a log entry
+type Entry interface {
+	GetCode() string
+	GetData() interface{}
+	GetLevel() logger.Level
+	GetMessage() string
+}
+
+// logEntry represents a log entry
+type logEntry struct {
+	Code    string
+	Data    interface{}
+	Level   logger.Level
+	Message string
+}
+
+// GetCode retrieves the code attached to this log.Entry instance
+func (le logEntry) GetCode() string {
+	if len(le.Code) == 0 {
 		return "UNKNOWN_CODE"
 	}
-	return e.Code
+	return le.Code
 }
 
-func (e Entry) GetMessage() string {
-	return e.Message
+// GetMessage retrieves the message attached to this log.Entry instance
+func (le logEntry) GetMessage() string {
+	return le.Message
 }
 
-func (e Entry) GetLevel() Level {
-	if len(e.Level) == 0 {
-		return LevelInfo
+// GetLevel retrieves the logger.Level attached to this log.Entry instance
+func (le logEntry) GetLevel() logger.Level {
+	if len(le.Level) == 0 {
+		return logger.LevelInfo
 	}
-	return e.Level
+	return le.Level
 }
 
-func (e Entry) GetData() interface{} {
-	return e.Data
+// GetData retrieves any data objects attached to this log.Entry instance
+func (le logEntry) GetData() interface{} {
+	return le.Data
 }
 
-func (e Entry) Error() string {
+// Error returns a string to comply with the `error` interface
+func (le logEntry) Error() string {
 	toString := fmt.Sprintf(
 		"[%s] %s: %s",
-		e.GetLevel(),
-		e.GetCode(),
-		e.GetMessage(),
+		le.GetLevel(),
+		le.GetCode(),
+		le.GetMessage(),
 	)
-	if e.Data != nil {
-		toString = fmt.Sprintf(
-			"%s, data: %v",
-			toString,
-			e.GetData(),
-		)
+	if le.Data != nil {
+		toString = fmt.Sprintf("%s, data: %v", toString, le.GetData())
 	}
 	return toString
 }

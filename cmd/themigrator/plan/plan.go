@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/usvc/logger"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/common"
 	"gitlab.com/zephinzer/themigrator/lib/connection"
 	"gitlab.com/zephinzer/themigrator/lib/log"
@@ -25,7 +26,6 @@ func Get(logs chan log.Entry) *cobra.Command {
 		Use:   "plan [PATH TO MIGRATIONS]",
 		Short: "Dumps the migraiton plan if the migration is run",
 		Run: func(command *cobra.Command, args []string) {
-			common.SetLogLevel(log.LevelTrace)
 			done := make(chan int)
 			eventStream := connection.NewEventStream()
 			go handleErrors(eventStream, done)
@@ -33,19 +33,11 @@ func Get(logs chan log.Entry) *cobra.Command {
 			go func() {
 				pathToMigrations, err := filepath.Abs(path.Join(args...))
 				if err != nil {
-					logs <- log.Entry{
-						Code:    CommandCode,
-						Level:   log.LevelError,
-						Message: err.Error(),
-					}
+					logs <- log.NewEntry(logger.LevelError, CommandCode, "failed to get absolute path of migrations", err)
 					done <- common.ExitCodeInsufficientPermissions
 					return
 				}
-				logs <- log.Entry{
-					Code:    CommandCode,
-					Level:   log.LevelInfo,
-					Message: fmt.Sprintf("using '%s' as the migrations directory", pathToMigrations),
-				}
+				logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("using '%s' as the migrations directory", pathToMigrations))
 				_, err = getLocalMigrations(pathToMigrations, logs)
 				if err != nil {
 					done <- common.ExitCodeGeneric
@@ -59,31 +51,22 @@ func Get(logs chan log.Entry) *cobra.Command {
 			os.Exit(exitCode)
 		},
 	}
-	connection.AddCobraFlags(cmd, &connectionOptions)
+	connection.AddCobraFlags(connection.AddCobraFlagsOptions{
+		Command:           cmd,
+		ConnectionOptions: &connectionOptions,
+	})
 	return cmd
 }
 
 func getRemoteMigrations(dbConnection *sql.DB, logs chan log.Entry) ([]migration.Migration, error) {
 	remoteMigrations, err := migration.LoadRemote(dbConnection)
 	if err != nil {
-		logs <- log.Entry{
-			Code:    CommandCode,
-			Level:   log.LevelError,
-			Message: err.Error(),
-		}
+		logs <- log.NewEntry(logger.LevelError, CommandCode, "error loading remote migrations", err)
 		return nil, err
 	}
-	logs <- log.Entry{
-		Code:    CommandCode,
-		Level:   log.LevelInfo,
-		Message: fmt.Sprintf("found %v remote migrations as follows", len(remoteMigrations)),
-	}
+	logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("found %v remote migrations as follows", len(remoteMigrations)))
 	for i := 0; i < len(remoteMigrations); i++ {
-		logs <- log.Entry{
-			Code:    "MIGRATION",
-			Level:   log.LevelDebug,
-			Message: fmt.Sprintf("%s: '%s'", remoteMigrations[i].ContentHash, remoteMigrations[i].Content),
-		}
+		logs <- log.NewEntry(logger.LevelDebug, "MIGRATION", fmt.Sprintf("%s: '%s'", remoteMigrations[i].ContentHash, remoteMigrations[i].Content))
 	}
 	return remoteMigrations, nil
 }
@@ -91,24 +74,14 @@ func getRemoteMigrations(dbConnection *sql.DB, logs chan log.Entry) ([]migration
 func getLocalMigrations(fromPath string, logs chan log.Entry) ([]migration.Migration, error) {
 	localMigrations, err := migration.LoadFilesystem(fromPath)
 	if err != nil {
-		logs <- log.Entry{
-			Code:    CommandCode,
-			Level:   log.LevelError,
-			Message: err.Error(),
-		}
+		logs <- log.NewEntry(logger.LevelError, CommandCode, "error loading local migrations", err)
 		return nil, err
 	}
-	logs <- log.Entry{
-		Code:    CommandCode,
-		Level:   log.LevelInfo,
-		Message: fmt.Sprintf("found %v local migrations as follows", len(localMigrations)),
-	}
+	logs <- log.NewEntry(logger.LevelInfo, CommandCode,
+		fmt.Sprintf("found %v local migrations as follows", len(localMigrations)),
+	)
 	for i := 0; i < len(localMigrations); i++ {
-		logs <- log.Entry{
-			Code:    "MIGRATION",
-			Level:   log.LevelDebug,
-			Message: fmt.Sprintf("%s: '%s'", localMigrations[i].ContentHash, localMigrations[i].Content),
-		}
+		logs <- log.NewEntry(logger.LevelDebug, "MIGRATION", fmt.Sprintf("%s: '%s'", localMigrations[i].ContentHash, localMigrations[i].Content))
 	}
 	return localMigrations, nil
 }

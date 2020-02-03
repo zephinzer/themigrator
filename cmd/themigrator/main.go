@@ -3,7 +3,7 @@ package main
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/cobra"
-	"gitlab.com/zephinzer/themigrator/cmd/themigrator/common"
+	"github.com/usvc/logger"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/initialise"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/new"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/plan"
@@ -11,18 +11,27 @@ import (
 	"gitlab.com/zephinzer/themigrator/lib/log"
 )
 
-var logs chan log.Entry
+var loggerInstance logger.Logger
+var logEntries chan log.Entry
 
 func init() {
-	logs = make(chan log.Entry, 256)
-	themigrator.AddCommand(verify.Get(logs))
-	themigrator.AddCommand(initialise.Get(logs))
-	themigrator.AddCommand(plan.Get(logs))
-	themigrator.AddCommand(new.Get(logs))
+	// setup the logger instance that will process all logs
+	loggerInstance = logger.New(logger.Config{
+		Level: logger.LevelTrace,
+	})
+
+	// setup the logs channel that will store all logs for processing
+	logEntries = make(chan log.Entry, 256)
+
+	// add the sub-commands of the `themigrator` command
+	themigrator.AddCommand(verify.Get(logEntries))
+	themigrator.AddCommand(initialise.Get(logEntries))
+	themigrator.AddCommand(plan.Get(logEntries))
+	themigrator.AddCommand(new.Get(logEntries))
 }
 
 func main() {
-	go common.HandleLogs(logs)
+	go log.Handle(loggerInstance, logEntries)
 	themigrator.Execute()
 }
 
