@@ -15,5 +15,8 @@ themigrator verify -d table_name
 themigrator new ./path/to/migrations
 
 # view pending migrations
-themigrator plan ./path/to/migrations
+themigrator apply ./path/to/migrations -d database_name ./path/to/migrations
+
+# apply pending migrations
+themigrator apply ./path/to/migrations -d database_name ./path/to/migrations --confirm
 ```

@@ -6,7 +6,7 @@ import (
 	"github.com/usvc/logger"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/initialise"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/new"
-	"gitlab.com/zephinzer/themigrator/cmd/themigrator/plan"
+	"gitlab.com/zephinzer/themigrator/cmd/themigrator/apply"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/verify"
 	"gitlab.com/zephinzer/themigrator/lib/log"
 )
@@ -26,7 +26,7 @@ func init() {
 	// add the sub-commands of the `themigrator` command
 	themigrator.AddCommand(verify.Get(logEntries))
 	themigrator.AddCommand(initialise.Get(logEntries))
-	themigrator.AddCommand(plan.Get(logEntries))
+	themigrator.AddCommand(apply.Get(logEntries))
 	themigrator.AddCommand(new.Get(logEntries))
 }
 

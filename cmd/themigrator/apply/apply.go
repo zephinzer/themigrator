@@ -1,4 +1,4 @@
-package plan
+package apply
 
 import (
 	"database/sql"
@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -17,14 +18,15 @@ import (
 )
 
 const (
-	CommandCode = "plan"
+	CommandCode = "apply"
 )
 
 func Get(logs chan log.Entry) *cobra.Command {
 	var connectionOptions connection.Options
+	var confirmApply bool
 	cmd := &cobra.Command{
-		Use:   "plan",
-		Short: "Dumps the migration plan if the migration is run",
+		Use:   "apply",
+		Short: "Applies pending migrations",
 		Run: func(command *cobra.Command, args []string) {
 			done := make(chan int)
 			eventStream := connection.NewEventStream()
@@ -47,7 +49,14 @@ func Get(logs chan log.Entry) *cobra.Command {
 				remoteMigrations, err := getRemoteMigrations(<-eventStream.Connection, logs)
 
 				applicableMigrations := migration.GetUnappliedFrom(localMigrations, remoteMigrations)
-				logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("%v migrations will be applied", len(applicableMigrations)), applicableMigrations)
+				sort.Sort(applicableMigrations)
+				logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("%v migrations have yet to be applied", len(applicableMigrations)), applicableMigrations)
+
+				if !confirmApply {
+					logs <- log.NewEntry(logger.LevelWarn, CommandCode, "refusing to apply because --confirm was not specified")
+				} else {
+					logs <- log.NewEntry(logger.LevelInfo, CommandCode, "crossing fingers and applying the migrations now...")
+				}
 				done <- common.ExitCodeOK
 			}()
 			exitCode := <-done
@@ -55,6 +64,7 @@ func Get(logs chan log.Entry) *cobra.Command {
 			os.Exit(exitCode)
 		},
 	}
+	cmd.Flags().BoolVarP(&confirmApply, "confirm", "y", false, "When specified, applies the migrations as planned")
 	connection.AddCobraFlags(connection.AddCobraFlagsOptions{
 		Command:           cmd,
 		ConnectionOptions: &connectionOptions,
