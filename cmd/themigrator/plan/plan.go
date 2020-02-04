@@ -17,14 +17,14 @@ import (
 )
 
 const (
-	CommandCode = "PLAN"
+	CommandCode = "plan"
 )
 
 func Get(logs chan log.Entry) *cobra.Command {
 	var connectionOptions connection.Options
 	cmd := &cobra.Command{
-		Use:   "plan [PATH TO MIGRATIONS]",
-		Short: "Dumps the migraiton plan if the migration is run",
+		Use:   "plan",
+		Short: "Dumps the migration plan if the migration is run",
 		Run: func(command *cobra.Command, args []string) {
 			done := make(chan int)
 			eventStream := connection.NewEventStream()
@@ -38,12 +38,16 @@ func Get(logs chan log.Entry) *cobra.Command {
 					return
 				}
 				logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("using '%s' as the migrations directory", pathToMigrations))
-				_, err = getLocalMigrations(pathToMigrations, logs)
+				localMigrations, err := getLocalMigrations(pathToMigrations, logs)
 				if err != nil {
+					logs <- log.NewEntry(logger.LevelError, CommandCode, fmt.Sprintf("failed to retrieve local migrations from the path '%s'", pathToMigrations), err)
 					done <- common.ExitCodeGeneric
 					return
 				}
-				_, err = getRemoteMigrations(<-eventStream.Connection, logs)
+				remoteMigrations, err := getRemoteMigrations(<-eventStream.Connection, logs)
+
+				applicableMigrations := migration.GetUnappliedFrom(localMigrations, remoteMigrations)
+				logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("%v migrations will be applied", len(applicableMigrations)), applicableMigrations)
 				done <- common.ExitCodeOK
 			}()
 			exitCode := <-done
@@ -54,6 +58,7 @@ func Get(logs chan log.Entry) *cobra.Command {
 	connection.AddCobraFlags(connection.AddCobraFlagsOptions{
 		Command:           cmd,
 		ConnectionOptions: &connectionOptions,
+		RequiredFlags:     []string{connection.FlagDatabase.Long},
 	})
 	return cmd
 }
@@ -66,7 +71,7 @@ func getRemoteMigrations(dbConnection *sql.DB, logs chan log.Entry) ([]migration
 	}
 	logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("found %v remote migrations as follows", len(remoteMigrations)))
 	for i := 0; i < len(remoteMigrations); i++ {
-		logs <- log.NewEntry(logger.LevelDebug, "MIGRATION", fmt.Sprintf("%s: '%s'", remoteMigrations[i].ContentHash, remoteMigrations[i].Content))
+		logs <- log.NewEntry(logger.LevelDebug, CommandCode, fmt.Sprintf("%s: '%s'", remoteMigrations[i].ContentHash, remoteMigrations[i].Content))
 	}
 	return remoteMigrations, nil
 }
@@ -77,11 +82,9 @@ func getLocalMigrations(fromPath string, logs chan log.Entry) ([]migration.Migra
 		logs <- log.NewEntry(logger.LevelError, CommandCode, "error loading local migrations", err)
 		return nil, err
 	}
-	logs <- log.NewEntry(logger.LevelInfo, CommandCode,
-		fmt.Sprintf("found %v local migrations as follows", len(localMigrations)),
-	)
+	logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("found %v local migrations as follows", len(localMigrations)))
 	for i := 0; i < len(localMigrations); i++ {
-		logs <- log.NewEntry(logger.LevelDebug, "MIGRATION", fmt.Sprintf("%s: '%s'", localMigrations[i].ContentHash, localMigrations[i].Content))
+		logs <- log.NewEntry(logger.LevelDebug, CommandCode, fmt.Sprintf("%s: '%s'", localMigrations[i].ContentHash, localMigrations[i].Content))
 	}
 	return localMigrations, nil
 }

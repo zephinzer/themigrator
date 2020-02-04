@@ -14,17 +14,11 @@ import (
 func LoadFilesystem(filepath string) ([]Migration, error) {
 	files, err := ioutil.ReadDir(filepath)
 	if err != nil {
-		return nil, errors.New(
-			errors.ErrorFilesystemListDirectory,
-			fmt.Sprintf("unable to read directory listing at '%s'", filepath),
-		)
+		return nil, errors.New(errors.ErrorFilesystemListDirectory, fmt.Sprintf("unable to read directory listing at '%s'", filepath))
 	}
 	format, err := regexp.Compile(`[\d]{14}_[a-zA-Z0-9\-_\.]+.sql`)
 	if err != nil {
-		return nil, errors.New(
-			errors.ErrorRegexp,
-			"regex issue! why you no check?",
-		)
+		return nil, errors.New(errors.ErrorRegexp, "regex issue! why you no check?")
 	}
 	var migrations []Migration
 	for _, file := range files {
@@ -32,14 +26,12 @@ func LoadFilesystem(filepath string) ([]Migration, error) {
 			fullFilePath := path.Join(filepath, file.Name())
 			fileContent, err := ioutil.ReadFile(fullFilePath)
 			if err != nil {
-				return nil, errors.New(
-					errors.FilesystemReadFile,
-					fmt.Sprintf("unable to read contents of file at '%s'", fullFilePath),
-				)
+				return nil, errors.New(errors.FilesystemReadFile, fmt.Sprintf("unable to read contents of file at '%s'", fullFilePath))
 			}
 			content := utils.CompressWhitespace(string(fileContent))
 			contentHash := utils.Hash(content)
 			migrations = append(migrations, Migration{
+				ID:          file.Name(),
 				Content:     content,
 				ContentHash: contentHash,
 			})

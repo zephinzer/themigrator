@@ -14,7 +14,7 @@ func Handle(loggerInstance logger.Logger, logEntries chan Entry) {
 		logger.LevelError: loggerInstance.Error,
 	}
 	for logEntry := range logEntries {
-		printLog[logEntry.GetLevel()](logEntry.GetCode(), ".", logEntry.GetMessage())
+		printLog[logEntry.GetLevel()]("[", logEntry.GetCode(), "] ", logEntry.GetMessage())
 		if logEntry.GetData() != nil {
 			printLog[logEntry.GetLevel()](logEntry.GetData())
 		}
