@@ -26,6 +26,7 @@ func NewEntry(level logger.Level, code, message string, data ...interface{}) Ent
 
 // Entry represents a log entry
 type Entry interface {
+	Error() string
 	GetCode() string
 	GetData() interface{}
 	GetLevel() logger.Level
@@ -69,8 +70,7 @@ func (le logEntry) GetData() interface{} {
 // Error returns a string to comply with the `error` interface
 func (le logEntry) Error() string {
 	toString := fmt.Sprintf(
-		"[%s] %s: %s",
-		le.GetLevel(),
+		"%s: %s",
 		le.GetCode(),
 		le.GetMessage(),
 	)

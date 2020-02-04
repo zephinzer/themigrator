@@ -58,7 +58,7 @@ func Get(logs chan log.Entry) *cobra.Command {
 
 func handleLogs(eventStream connection.EventStream, logs chan log.Entry) {
 	for logEntry := range eventStream.Logs {
-		logs <- logEntry
+		logs <- log.NewEntry(logEntry.GetLevel(), CommandCode, logEntry.Error())
 	}
 }
 
