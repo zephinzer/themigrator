@@ -1,12 +1,14 @@
 package main
 
 import (
+	"strings"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/cobra"
 	"github.com/usvc/logger"
+	"gitlab.com/zephinzer/themigrator/cmd/themigrator/apply"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/initialise"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/new"
-	"gitlab.com/zephinzer/themigrator/cmd/themigrator/apply"
 	"gitlab.com/zephinzer/themigrator/cmd/themigrator/verify"
 	"gitlab.com/zephinzer/themigrator/lib/log"
 )
@@ -36,7 +38,11 @@ func main() {
 }
 
 var themigrator = cobra.Command{
-	Use: "themigrator",
+	Use:   "themigrator",
+	Short: "the migrator",
+	Long: strings.Trim(`themigrator
+	When the only way to go is up!
+	`, " \n\t"),
 	Run: func(command *cobra.Command, args []string) {
 		command.Help()
 	},

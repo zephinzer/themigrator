@@ -22,7 +22,7 @@ themigrator -h
 themigrator init -d table_name
 
 # verify your database connection
-themigrator verify -d table_name
+themigrator verify connection
 
 # create new migration at ./path/to/migrations
 themigrator new ./path/to/migrations
