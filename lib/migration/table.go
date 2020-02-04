@@ -17,10 +17,11 @@ func CreateTable(connection *sql.DB) error {
 	stmt, err := connection.Prepare(fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s(
 			id INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+			uuid VARCHAR(256) NOT NULL,
 			content TEXT NOT NULL,
 			content_hash VARCHAR(64) NOT NULL,
 			created_on TIMESTAMP NOT NULL DEFAULT NOW(),
-			applied_on DATETIME
+			applied_on TIMESTAMP NOT NULL DEFAULT NOW()
 		) ENGINE=InnoDB default charset utf8mb4;
 	`, TableName))
 	if err != nil {

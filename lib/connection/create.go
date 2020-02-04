@@ -6,6 +6,9 @@ import (
 	"net/url"
 )
 
+// Create returns a database connection pool that can be used
+// to begin transacting. When an error is not returned, that
+// means the provided Options works
 func Create(opt Options) (*sql.DB, error) {
 	connectionParams := url.Values{}
 	connectionParams.Add("parseTime", "true")

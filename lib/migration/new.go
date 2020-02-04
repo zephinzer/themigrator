@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func New(id string, filepath string) (*Migration, error) {
+func New(uuid string, filepath string) (*Migration, error) {
 	fileContent, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func New(id string, filepath string) (*Migration, error) {
 		)
 	contentHash := fmt.Sprintf("%x", sha256.Sum256([]byte(content)))
 	return &Migration{
-		ID:          id,
+		UUID:        uuid,
 		Content:     content,
 		ContentHash: contentHash,
 	}, nil

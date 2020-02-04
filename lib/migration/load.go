@@ -31,7 +31,7 @@ func LoadFilesystem(filepath string) ([]Migration, error) {
 			content := utils.CompressWhitespace(string(fileContent))
 			contentHash := utils.Hash(content)
 			migrations = append(migrations, Migration{
-				ID:          file.Name(),
+				UUID:        file.Name(),
 				Content:     content,
 				ContentHash: contentHash,
 			})
@@ -41,15 +41,16 @@ func LoadFilesystem(filepath string) ([]Migration, error) {
 }
 
 func LoadRemote(connection *sql.DB) ([]Migration, error) {
-	stmt, err := connection.Prepare(`
+	stmt, err := connection.Prepare(fmt.Sprintf(`
 		SELECT 
 			id,
+			uuid,
 			content,
 			content_hash,
 			created_on,
 			applied_on
-			FROM themigrations
-	`)
+			FROM %s
+	`, TableName))
 	if err != nil {
 		return nil, errors.New(
 			errors.ErrorDatabaseStatementPrep,
@@ -68,6 +69,7 @@ func LoadRemote(connection *sql.DB) ([]Migration, error) {
 		var migration Migration
 		if err = rows.Scan(
 			&migration.ID,
+			&migration.UUID,
 			&migration.Content,
 			&migration.ContentHash,
 			&migration.CreatedOn,
