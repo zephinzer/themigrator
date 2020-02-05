@@ -29,9 +29,23 @@ build:
   script:
     - make build_production
 
-release:
+version bump:
+  only: ["master"]
   stage: release
-  image: usvc/semver:latest
+  image: usvc/semver:gitlab-latest
+  before_script:
+    - mkdir -p ~/.ssh
+    - 'printf -- "${DEPLOY_KEY}" | base64 -d > ~/.ssh/id_rsa'
+    - chmod 600 -R ~/.ssh/id_rsa
+    - ssh-keyscan -t rsa gitlab.com >> ~/.ssh/known_hosts
+  script:
+    - git remote set-url origin "git@gitlab.com:${CI_PROJECT_PATH}.git"
+    - git checkout master
+    - semver bump --git --apply
+    - git push origin master --verbose --tags
+  after_script:
+    - rm -rf ~/.ssh/*
+
 
 package:
   stage: package
