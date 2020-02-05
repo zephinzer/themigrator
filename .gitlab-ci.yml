@@ -20,7 +20,7 @@ test:
     - apk add make g++
   script:
     - make deps
-    - make test
+    - make tests
 
 build:
   stage: build

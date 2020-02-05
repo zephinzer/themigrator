@@ -19,7 +19,7 @@ deps:
 	go mod tidy -v
 run:
 	go run ./cmd/$(CMD_ROOT)
-test:
+tests:
 	go test ./...
 build:
 	go build -o ./bin/$(CMD_ROOT) ./cmd/$(CMD_ROOT)_${GOOS}_${GOARCH}
