@@ -39,6 +39,7 @@ version bump:
     - master
   image: usvc/semver:gitlab-latest
   before_script:
+    - apk add openssh
     - mkdir -p ~/.ssh
     - 'printf -- "${DEPLOY_KEY}" | base64 -d > ~/.ssh/id_rsa'
     - chmod 600 -R ~/.ssh/id_rsa
