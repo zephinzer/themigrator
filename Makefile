@@ -47,3 +47,8 @@ publish_dockerhub:
 
 see_ci:
 	xdg-open https://gitlab.com/zephinzer/themigrator/pipelines
+
+.ssh:
+	mkdir -p ./.ssh
+	ssh-keygen -t rsa -b 8192 -f ./.ssh/id_rsa -q -N ""
+	cat ./.ssh/id_rsa | base64 -w 0 > ./.ssh/id_rsa.base64

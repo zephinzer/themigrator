@@ -1,0 +1,75 @@
+image: golang:1.13-alpine
+stages:
+  - test
+  - build
+  - release
+  - package
+  - publish
+
+test:
+  stage: test
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - ./vendor
+  before_script:
+    - apk add make g++
+  script:
+    - make deps
+    - make test
+
+build:
+  stage: build
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - ./bin/themigrator_linux_amd64
+  before_script:
+    - apk add make git g++
+  script:
+    - make build_production
+
+release:
+  stage: release
+  image: usvc/semver:latest
+
+package:
+  stage: package
+  services:
+    - docker:19.03.1-dind
+  image: docker:19.03.1
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - ./build/themigrator.tar.gz
+  before_script:
+    - apk add make
+    - docker info
+    - docker version
+  script:
+    - make package
+    - make save
+
+dockerhub:
+  stage: publish
+  only:
+    - tags
+  services:
+    - docker:19.03.1-dind
+  image: docker:19.03.1
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+  dependencies: ["package"]
+  before_script:
+    - apk add make
+    - docker info
+    - docker version
+    - docker login docker.io -u${DOCKERHUB_USER} -p${DOCKERHUB_PASSWORD}
+  script:
+    - make load
+    - make publish_dockerhub
+  after_script:
+    - docker logout
+    - rm -rf ~/.docker
