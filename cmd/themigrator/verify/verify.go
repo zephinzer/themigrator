@@ -3,6 +3,7 @@ package verify
 import (
 	"github.com/spf13/cobra"
 	connectionCmd "gitlab.com/zephinzer/themigrator/cmd/themigrator/verify/connection"
+	migrationsCmd "gitlab.com/zephinzer/themigrator/cmd/themigrator/verify/migrations"
 	"gitlab.com/zephinzer/themigrator/lib/log"
 )
 
@@ -15,5 +16,6 @@ func Get(logs chan log.Entry) *cobra.Command {
 		},
 	}
 	cmd.AddCommand(connectionCmd.Get(logs))
+	cmd.AddCommand(migrationsCmd.Get(logs))
 	return cmd
 }

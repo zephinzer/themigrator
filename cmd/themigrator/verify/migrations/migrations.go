@@ -1,12 +1,10 @@
-package apply
+package migrations
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -18,16 +16,14 @@ import (
 )
 
 const (
-	CommandCode = "apply"
+	CommandCode = "verify-migrations"
 )
 
 func Get(logs chan log.Entry) *cobra.Command {
 	var connectionOptions connection.Options
-	var confirmApply bool
-	var migrateUpTo int
 	cmd := &cobra.Command{
-		Use:   "apply",
-		Short: "Applies pending migrations",
+		Use:   "migrations",
+		Short: "Verifies migrations have not been correupted",
 		Run: func(command *cobra.Command, args []string) {
 			done := make(chan int)
 			eventStream := connection.NewEventStream()
@@ -84,39 +80,33 @@ func Get(logs chan log.Entry) *cobra.Command {
 					logs <- log.NewEntry(logger.LevelDebug, CommandCode, fmt.Sprintf("%s/%s: '%s'", remoteMigration.UUID, remoteMigration.ContentHash, remoteMigration.Content))
 				}
 
-				// deduce the migrations that need applying
-				applicableMigrations := migration.GetUnappliedFrom(localMigrations, remoteMigrations)
-				if len(applicableMigrations) == 0 {
-					logs <- log.NewEntry(logger.LevelInfo, CommandCode, "all migrations that could've been applied have been")
-					done <- common.ExitCodeOK
-					return
-				}
-				sort.Sort(applicableMigrations)
-				logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("%v migrations have yet to be applied", len(applicableMigrations)))
-				for i := 0; i < len(applicableMigrations); i++ {
-					applicableMigration := applicableMigrations[i]
-					logs <- log.NewEntry(logger.LevelDebug, CommandCode, fmt.Sprintf("%s/%s: '%s'", applicableMigration.UUID, applicableMigration.ContentHash, applicableMigration.Content))
-				}
-
-				if !confirmApply {
-					logs <- log.NewEntry(logger.LevelWarn, CommandCode, "refusing to apply because --confirm was not specified")
-					done <- common.ExitCodeSavedYourAss
-					return
-				}
-
-				logs <- log.NewEntry(logger.LevelInfo, CommandCode, "crossing fingers and applying the migrations now...")
-				if migrateUpTo < 0 {
-					migrateUpTo = len(applicableMigrations)
-				}
-				for i := 0; i < migrateUpTo; i++ {
-					applicableMigration := applicableMigrations[i]
-					if err = applicableMigration.Apply(establishedConnection); err != nil {
-						logs <- log.NewEntry(logger.LevelError, CommandCode, fmt.Sprintf("could not apply migration '%s'", applicableMigration.UUID), err)
-						done <- common.ExitMigrationFailed
+				// verify that everything in the remote can be found locally with its integrity in-tact
+				for i := 0; i < len(remoteMigrations); i++ {
+					remoteMigration := remoteMigrations[i]
+					localMigration := localMigrations[i]
+					uuidMatches := remoteMigration.HasSameUUIDAs(localMigration)
+					contentHashMatches := remoteMigration.HasSameContentHashAs(localMigration)
+					if uuidMatches && contentHashMatches {
+						logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("processed %s/%s", remoteMigration.UUID, remoteMigration.ContentHash))
+					} else if !uuidMatches && !contentHashMatches {
+						migrationFoundElsewhere := false
+						for _, anotherLocalMigration := range localMigrations {
+							extraCheckUUIDMatches := remoteMigration.HasSameUUIDAs(anotherLocalMigration)
+							extraCheckContentHashMatches := remoteMigration.HasSameContentHashAs(anotherLocalMigration)
+							if extraCheckUUIDMatches && extraCheckContentHashMatches {
+								migrationFoundElsewhere = true
+							}
+						}
+						if migrationFoundElsewhere {
+							logs <- log.NewEntry(logger.LevelWarn, CommandCode, fmt.Sprintf("remote migration with ID '%s' and hash '%s' has a local copy but it seems like the order may be wonky", remoteMigration.UUID, remoteMigration.ContentHash))
+						} else {
+							logs <- log.NewEntry(logger.LevelError, CommandCode, fmt.Sprintf("remote migration with ID '%s' and hash '%s' does not have local copy", remoteMigration.UUID, remoteMigration.ContentHash))
+						}
 					} else {
-						logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("successfully applied migration '%s'", applicableMigration.UUID), err)
+						logs <- log.NewEntry(logger.LevelWarn, CommandCode, fmt.Sprintf("uuid/content mismatch between %s/%s and %s/%s", remoteMigration.UUID, remoteMigration.ContentHash, localMigration.UUID, localMigration.ContentHash))
 					}
 				}
+
 				done <- common.ExitCodeOK
 			}()
 			exitCode := <-done
@@ -124,27 +114,13 @@ func Get(logs chan log.Entry) *cobra.Command {
 			os.Exit(exitCode)
 		},
 	}
-	cmd.Flags().IntVarP(&migrateUpTo, "steps", "S", -1, "when 0 or positive, this will be how many migrations to run")
-	cmd.Flags().BoolVarP(&confirmApply, "confirm", "y", false, "when specified, applies the migrations as planned")
+
 	connection.AddCobraFlags(connection.AddCobraFlagsOptions{
 		Command:           cmd,
 		ConnectionOptions: &connectionOptions,
 		RequiredFlags:     []string{connection.FlagDatabase.Long},
 	})
 	return cmd
-}
-
-func getRemoteMigrations(dbConnection *sql.DB, logs chan log.Entry) ([]migration.Migration, error) {
-	remoteMigrations, err := migration.LoadRemote(dbConnection)
-	if err != nil {
-		logs <- log.NewEntry(logger.LevelError, CommandCode, "error loading remote migrations", err)
-		return nil, err
-	}
-	logs <- log.NewEntry(logger.LevelInfo, CommandCode, fmt.Sprintf("found %v remote migrations as follows", len(remoteMigrations)))
-	for i := 0; i < len(remoteMigrations); i++ {
-		logs <- log.NewEntry(logger.LevelDebug, CommandCode, fmt.Sprintf("%s: '%s'", remoteMigrations[i].ContentHash, remoteMigrations[i].Content))
-	}
-	return remoteMigrations, nil
 }
 
 func handleErrors(eventStream connection.EventStream, done chan int) {

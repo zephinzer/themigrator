@@ -13,4 +13,5 @@ const (
 	ExitCodeErrorCreatingFile
 	ExitCodeInsufficientPermissions
 	ExitCodeSavedYourAss
+	ExitMigrationFailed
 )

@@ -17,6 +17,18 @@ type Migration struct {
 	AppliedOn   time.Time
 }
 
+func (m Migration) HasSameUUIDAs(n Migration) bool {
+	return strings.Compare(m.UUID, n.UUID) == 0
+}
+
+func (m Migration) HasSameContentHashAs(n Migration) bool {
+	return strings.Compare(m.ContentHash, n.ContentHash) == 0
+}
+
+func (m Migration) IsEqual(n Migration) bool {
+	return m.HasSameUUIDAs(n) && m.HasSameContentHashAs(n)
+}
+
 func (m Migration) Apply(connections *sql.DB) error {
 	migrationTx, err := connections.Begin()
 	if err != nil {
