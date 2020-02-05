@@ -34,8 +34,9 @@ build:
     - make build_production
 
 version bump:
-  only: ["master"]
   stage: release
+  only:
+    - master
   image: usvc/semver:gitlab-latest
   before_script:
     - mkdir -p ~/.ssh
@@ -53,6 +54,8 @@ version bump:
 
 package:
   stage: package
+  only:
+    - tags
   services:
     - docker:19.03.1-dind
   image: docker:19.03.1
