@@ -1,5 +1,8 @@
 # `themigrator`
 
+[![pipeline status](https://gitlab.com/zephinzer/themigrator/badges/master/pipeline.svg)](https://gitlab.com/zephinzer/themigrator/-/commits/master)
+[![Build Status](https://travis-ci.org/zephinzer/themigrator.svg?branch=master)](https://travis-ci.org/zephinzer/themigrator)
+
 Forward looking migrator that only goes one way - UP!
 
 > Note: Still a WIP
