@@ -17,7 +17,8 @@ deploy:
   on:
     tags: true
 before_script:
-  - apk add make g++
+  - apt-get update -y
+  - apt-get install -y make g++
 script:
   - make deps
   - GOOS=linux GOARCH=amd64 make build_production
