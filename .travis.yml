@@ -16,14 +16,11 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-include:
-  jobs:
-    - stage: build
-      before_script:
-        - apk add make g++
-      script:
-        - make deps
-        - GOOS=linux GOARCH=amd64 make build_production
-        - GOOS=darwin GOARCH=amd64 make build_production
-        - GOOS=windows GOARCH=386 make build_production
-        - ls -al ./bin
+before_script:
+  - apk add make g++
+script:
+  - make deps
+  - GOOS=linux GOARCH=amd64 make build_production
+  - GOOS=darwin GOARCH=amd64 make build_production
+  - GOOS=windows GOARCH=386 make build_production
+  - ls -al ./bin
