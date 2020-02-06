@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -52,6 +53,7 @@ var themigrator = cobra.Command{
 	Long: strings.Trim(`themigrator
 	When the only way to go is up!
 	`, " \n\t"),
+	Version: fmt.Sprintf("%s-%s %s", Version, Commit, Timestamp),
 	PersistentPreRun: func(command *cobra.Command, args []string) {
 		var logLevel logger.Level
 		if logOptions.Level > 0 && logOptions.Level <= 5 {
