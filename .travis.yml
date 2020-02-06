@@ -1,4 +1,7 @@
 sudo: required
+language: go
+go:
+  - "1.13"
 stages:
   - build
   - deploy
@@ -17,6 +20,8 @@ deploy:
 include:
   jobs:
     - stage: build
+      before_script:
+        - apk add make g++
       script:
         - make deps
         - GOOS=linux GOARCH=amd64 make build_production
