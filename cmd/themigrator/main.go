@@ -13,10 +13,20 @@ import (
 	"gitlab.com/zephinzer/themigrator/lib/log"
 )
 
-var loggerConfig logger.Config
-var loggerInstance logger.Logger
-var logEntries chan log.Entry
-var logOptions log.Options
+// versioning stuff
+var (
+	Commit    string
+	Version   string
+	Timestamp string
+)
+
+// logging stuff
+var (
+	loggerConfig   logger.Config
+	loggerInstance logger.Logger
+	logEntries     chan log.Entry
+	logOptions     log.Options
+)
 
 func init() {
 	// setup the logs channel that will store all logs for processing
