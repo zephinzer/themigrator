@@ -27,11 +27,13 @@ build:
   artifacts:
     expire_in: 1 day
     paths:
-      - ./bin/themigrator_linux_amd64
+      - ./bin/themigrator*
   before_script:
     - apk add make git g++
   script:
-    - make build_production
+    - GOOS=linux GOARCH=amd64 make build_production
+    - GOOS=darwin GOARCH=amd64 make build_production
+    - GOOS=windows GOARCH=386 make build_production
 
 version bump:
   stage: release

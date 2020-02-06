@@ -19,4 +19,6 @@ include:
     - stage: build
       script:
         - make deps
-        - make build_production
+        - GOOS=linux GOARCH=amd64 make build_production
+        - GOOS=darwin GOARCH=amd64 make build_production
+        - GOOS=windows GOARCH=386 make build_production
