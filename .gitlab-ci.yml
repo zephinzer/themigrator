@@ -29,7 +29,7 @@ build:
     paths:
       - ./bin/themigrator*
   before_script:
-    - apk add make git g++
+    - apk add make git g++ upx
   script:
     - GOOS=linux GOARCH=amd64 make build_production
     - GOOS=darwin GOARCH=amd64 make build_production
