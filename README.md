@@ -7,6 +7,10 @@ Forward looking migrator that only goes one way - UP!
 
 > Note: Still a WIP
 
+
+- - -
+
+
 ## Usage
 
 ### Principles
@@ -43,6 +47,8 @@ Use "themigrator [command] --help" for more information about a command.
 
 #### `themigrator init -d db_name`: Initialise the migration table
 
+Example output:
+
 ```
 DEBUG[20200206185107] [initialise] checking if migration table exists... 
 INFO[20200206185107] [DB_CONNECTION_SUCCEEDED] connection succeeded 
@@ -51,6 +57,8 @@ INFO[20200206185107] [initialise] migration table successfully created
 ```
 
 #### `themigrator verify connection`: Verifies database credentials
+
+Example output:
 
 ```
 DEBUG[20200206185131] [verify-connection] connecting as 'user' to 'localhost:3306/' with parameters map[] 
@@ -156,25 +164,77 @@ INFO[20200206185355] [apply] all migrations that could've been applied have been
 
 ### Flags
 
-| Long | Short | Description |
-| --- | --- | --- |
-| `--help` | `-h` | Displays the help message for the CLI |
-| `--user` | `-u` | User to use to login to the database |
-| `--password` | `-p` | Password of the user used to use to login to the database |
-| `--host` | `-H` | Hostname where the database service is reachable at |
-| `--port` | `-P` | Port which the database service is listening on |
-| `--database` | `-d` | Name of the database to apply the migrations to |
-| `--driver` | `-D` | Type of database you're applying the migration on |
+#### `--help`, `-h`
+
+Displays the help message for the CLI
+
+#### `--user`, `-u`
+
+User to use to login to the database
+
+#### `--password`, `-p`
+
+Password of the user used to use to login to the database
+
+#### `--host`, `-H`
+
+Hostname where the database service is reachable at
+
+#### `--port`, `-P`
+
+Port which the database service is listening on
+
+#### `--database`, `-d`
+
+Name of the database to apply the migrations to
+
+#### `--log-level`, `-l`
+
+> This is a **global flag**
+
+A number from 0 to 5 indicating the verbosity of logs.
+
+- 0 silences the logs
+- 1 outputs logs at only the `error` level
+- 2 outputs logs at the `warning` level and above
+- 3 outputs logs at the `info` level and above
+- 4 outputs logs at the `debug` level and above
+- 5 outputs logs at the `trace` level and above
+
+#### `--log-format`, `-f`
+
+> This is a **global flag**
+
+One of `"json"` or `"text"`. Defaults to `"text"`.
+
+
+
+- - -
+
 
 ## Development
 
 ### Setting up
 
-THe `init` recipe in the `Makefile` will set up an environment with MySQL, MariaDB, and PostgreSQL instances.
+THe `init` recipe in the `Makefile` will set up an environment with MySQL and MariaDB instances.
+
+### Shell access to the database
+
+To get a shell to the MySQL database, use `make check_mysql`.
+
+To get a shell to the Maria database, use `make check_maria`.
+
+### Manual Testing
+
+- There are sample migrations located at `./test/migrations`
 
 ### Tearing down
 
 The `denit` recipe in the `Makefile` should do the job.
+
+
+- - -
+
 
 ## Licensing
 

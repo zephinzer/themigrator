@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -23,7 +24,10 @@ func Get(logs chan log.Entry) *cobra.Command {
 	var connectionOptions connection.Options
 	cmd := &cobra.Command{
 		Use:   "migrations",
-		Short: "Verifies migrations have not been corrupted",
+		Short: "verifies that migrations locally and remotely are in order",
+		Long: strings.Trim(`themigrator verify migrations
+		verifies that migrations locally and remotely are in order
+		`, " \n\t"),
 		Run: func(command *cobra.Command, args []string) {
 			done := make(chan int)
 			eventStream := connection.NewEventStream()

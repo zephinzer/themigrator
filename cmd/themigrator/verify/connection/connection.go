@@ -3,6 +3,7 @@ package connection
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -20,7 +21,10 @@ func Get(logs chan log.Entry) *cobra.Command {
 	var connectionOptions connection.Options
 	cmd := &cobra.Command{
 		Use:   "connection",
-		Short: "Verifies the connection configuration",
+		Short: "verifies that the connection is valid with the provided credentials",
+		Long: strings.Trim(`themigrator verify connection
+		verifies that the connection is valid with the provided credentials
+		`, " \n\t"),
 		Run: func(command *cobra.Command, args []string) {
 			done := make(chan int)
 			eventStream := connection.NewEventStream()
