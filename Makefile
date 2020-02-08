@@ -33,7 +33,8 @@ build_production:
 			-extldflags 'static' \
 			-s -w" \
 		-o ./bin/.$(CMD_ROOT)_$$(go env GOOS)_$$(go env GOARCH)${BIN_EXT} \
-		./cmd/$(CMD_ROOT);
+		./cmd/$(CMD_ROOT)
+	rm -rf ./bin/$(CMD_ROOT)_$$(go env GOOS)_$$(go env GOARCH)${BIN_EXT}
 	upx -9 -v \
 		./bin/.$(CMD_ROOT)_$$(go env GOOS)_$$(go env GOARCH)${BIN_EXT} \
 		-o ./bin/$(CMD_ROOT)_$$(go env GOOS)_$$(go env GOARCH)${BIN_EXT}

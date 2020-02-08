@@ -1,4 +1,4 @@
-image: golang:1.13-alpine
+image: golang:1.13
 stages:
   - test
   - build
@@ -17,7 +17,8 @@ test:
     paths:
       - ./vendor
   before_script:
-    - apk add make g++
+    - apt-get update
+    - apt-get install -y make g++
   script:
     - make deps
     - make tests
@@ -29,7 +30,8 @@ build:
     paths:
       - ./bin/themigrator*
   before_script:
-    - apk add make git g++ upx
+    - apt-get update
+    - apt-get install -y make git g++ upx
   script:
     - GOOS=linux GOARCH=amd64 make build_production
     - GOOS=darwin GOARCH=amd64 make build_production
